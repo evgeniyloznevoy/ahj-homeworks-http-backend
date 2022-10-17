@@ -35,24 +35,24 @@ app.use(koaBody({
 const tickets = [
     {
         id: 0,
-        name: 'Поменять краску в принтере, ком.404',
-        description: 'Принтер HP LJ 1210, картридж на складе',
-        status: false,
-        created: new Date('2019-03-10, 08:40').toString().slice(3, 21)
+        name: 'Поменять краску в принтере',
+        description: 'Принтер HP, картридж на складе',
+        status: true,
+        created: new Date('2022-10-10, 08:40').toString().slice(3, 21)
     },
     {
         id: 1,
-        name: 'Переустановить Windows, ПК-Hall24',
-        description: 'Windows 10 HE, установочный диск в серверной',
+        name: 'Установить обновления для ПК',
+        description: 'Windows 11',
         status: false,
-        created: new Date('2019-03-15, 12:35').toString().slice(3, 21)
+        created: new Date('2022-10-15, 13:35').toString().slice(3, 21)
     },
     {
         id: 2,
-        name: 'Установить обновление КВ-ХХХ',
-        description: 'Никто точно не знает, что такое КВ-ХХХ',
+        name: 'Вызвать сантехника',
+        description: 'Течет кран в сан-узле',
         status: false,
-        created: new Date('2019-03-15, 12:40').toString().slice(3, 21)
+        created: new Date('2022-10-15, 12:40').toString().slice(3, 21)
     }
 ];
 
