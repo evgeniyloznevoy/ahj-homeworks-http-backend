@@ -1,81 +1,129 @@
 const http = require('http');
 const Koa = require('koa');
-const Router = require('@koa/router');
-const Mount = require('koa-mount');
-const BodyParser = require('koa-bodyparser');
-const cors = require('@koa/cors');
-
-const tickets = ticketList()
-
-const v1Router = new Router();
-
-v1Router.get('/tickets', (ctx, next) => {
-    ctx.body = tickets;
-});
-
-v1Router.get('/tickets/:id', (ctx, next) => {
-    const id = Number(ctx.params.id)
-    const e = tickets.find(e => e.id === id)
-    if (e === undefined) {
-        ctx.status = 404;
-        return
-    }
-    ctx.body = e;
-});
-
-v1Router.post('/tickets', (ctx, next) => {
-    let maxID = -1;
-    tickets.forEach((e) => maxID = Math.max(maxID, e.id))
-    let task = ctx.request.body;
-    task.id = maxID + 1
-    tickets.push(task)
-    ctx.status = 200;
-});
-
-const appV1 = new Koa();
-
-appV1.use(BodyParser());
-
-appV1.use(v1Router.routes())
-
+const koaBody = require('koa-body');
+const cors = require('koa2-cors');
 const app = new Koa();
 
-app.use(cors());
-app.use(Mount('/v1', appV1));
-
-const port = process.env.PORT || 80;
-const server = http.createServer(app.callback()).listen(port, () => console.log(`server is listening on port ${port}`));
-
-function ticketList() {
-    return [
-        {
-            id: 1,
-            name: "Обновить Windows",
-            description: "Установить свежее обновление операционной системы",
-            status: 0,
-            created: "2022-10-10T23:50:00"
-        },
-        {
-            id: 2,
-            name: "Купить новый дрель",
-            description: "Сходить в магазин за новой дрелью",
-            status: 0,
-            created: "2022-10-12T17:00:00"
-        },
-        {
-            id: 3,
-            name: "Повесить полку",
-            description: "Повесить полку на кухне",
-            status: 1,
-            created: "2022-10-13T15:00:00"
-        },
-        {
-            id: 4,
-            name: "Позвонить сантехнику",
-            description: "Вызвать сантехника для ремонта душа",
-            status: 0,
-            created: "2022-10-13T13:00:00"
-        },
-    ]
-
+class Ticket {
+    constructor(id, name, status, created) {
+        this.id = id,
+        this.name = name,
+        this.status = status,
+        this.created = created
+    }
 }
+
+class TicketFull {
+    constructor(id, name, description, status, created) {
+        this.id = id,
+        this.name = name,
+        this.description = description,
+        this.status = status,
+        this.created = created
+    }
+}
+
+app.use(cors());
+
+app.use(koaBody({
+    text: true,
+    urlencoded: true,
+    multipart: true,
+    json: true
+}));
+
+const tickets = [
+    {
+        id: 0,
+        name: 'Поменять краску в принтере, ком.404',
+        description: 'Принтер HP LJ 1210, картридж на складе',
+        status: false,
+        created: new Date('2019-03-10, 08:40').toString().slice(3, 21)
+    },
+    {
+        id: 1,
+        name: 'Переустановить Windows, ПК-Hall24',
+        description: 'Windows 10 HE, установочный диск в серверной',
+        status: false,
+        created: new Date('2019-03-15, 12:35').toString().slice(3, 21)
+    },
+    {
+        id: 2,
+        name: 'Установить обновление КВ-ХХХ',
+        description: 'Никто точно не знает, что такое КВ-ХХХ',
+        status: false,
+        created: new Date('2019-03-15, 12:40').toString().slice(3, 21)
+    }
+];
+
+function getAllTickets() {
+    const arr = [];
+    tickets.forEach((el) => {
+        arr.push(new Ticket(el.id, el.name, el.status, el.created))
+    })
+    return arr;
+}
+
+function findTicketById(id) {
+    const result = tickets.find((ticket) => ticket.id === id);
+    return result;
+}
+
+app.use(async ctx => {
+    const params = new URLSearchParams(ctx.request.querystring);
+    const obj = { method: params.get('method'), id: params.get('id') };
+    const { method, id } = obj;
+    const { body } = ctx.request;
+
+    switch (method) {
+        case 'allTickets':
+            ctx.response.body = getAllTickets();
+            return;
+
+        case 'ticketById':
+            if (ctx.request.query.id) {
+                ctx.response.body = findTicketById(+id);
+            }
+            return;
+
+        case 'createTicket':
+            const nextId = tickets.length;
+            tickets.push(new TicketFull(
+                nextId,
+                body.title,
+                body.description,
+                false,
+                new Date().toString().slice(3, 21)
+            ))
+            ctx.response.body = tickets[nextId];
+            return;
+
+        case 'editTicket':
+            const index = body.id;
+            tickets[index].name = body.title;
+            tickets[index].description = body.description;
+            ctx.response.body = tickets[index];
+            return;
+
+        case 'deleteTicket':
+            const ind = tickets.findIndex((ticket) => +ticket.id === +id);
+            ctx.response.body = 'del';
+            tickets.splice(ind, 1);
+            return;
+
+        default:
+            ctx.response.status = 404;
+            return;
+    }
+});
+
+app.use(async (ctx) => {
+    console.log('request.querystring:', ctx.request.querystring);
+    console.log('request.body', ctx.request.body);
+    ctx.response.status = 204;
+
+    console.log(ctx.response);
+});
+
+const port = process.env.PORT || 7070;
+const server = http.createServer(app.callback()).listen(port, () => console.log(`server is listening on port ${port}`));
