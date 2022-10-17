@@ -1,0 +1,17 @@
+GET http://localhost:8000/v1/tickets
+
+###
+
+GET http://localhost:8000/v1/tickets/6
+
+###
+
+POST http://localhost:80/v1/tickets
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Краткое описание",
+  "description": "Длинное описание",
+  "status": 0,
+  "created": "2022-02-10T17:13:53.818Z"
